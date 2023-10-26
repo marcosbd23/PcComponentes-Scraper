@@ -5,12 +5,14 @@ const fs = require("fs");
 
 puppeteer.use(pluginStealth());
 
-
 (async () => {
+    let productsData = [];
+    const LINKS = fs.readFileSync('links.txt').toString().replace(/\r/g, "").split("\n")
+
     // Create a cluster with 2 workers
     const cluster = await Cluster.launch({
         concurrency: Cluster.CONCURRENCY_CONTEXT,
-        maxConcurrency: 2,
+        maxConcurrency: 5,
 
         puppeteer,
         puppeteerOptions: {
@@ -18,34 +20,38 @@ puppeteer.use(pluginStealth());
         }
     });
 
-    let productsData = [];
-    const LINKS = fs.readFileSync('links.txt').toString().split("\n")
-
     // Scrape Task
     await cluster.task(async ({ page, data: url }) => {
         await page.goto(url);
 
         await page.waitForSelector('#pdp-title');
-        let data = await page.evaluate(() => {
+        let data = await page.evaluate((url) => {
             const id = document.querySelector("#pdp-id").textContent;
             const title = document.querySelector("#pdp-title").textContent;
-            const price = document.querySelector("#pdp-price-current-integer").textContent;
-            const seller = document.querySelector(".sc-feUZmu.fzZuQg.sc-dLmyTH.bpKjPK").textContent;
-            const sellerLink = document.querySelector(".sc-feUZmu.fzZuQg.sc-dLmyTH.bpKjPK").href;
-            const reviews = document.querySelector(".sc-gmPhUn.hTKdHy.sc-fYKINB.espnua").textContent.replace(/[(opiniones) ]/g, "");
+            const stock = document.querySelector("#pdp-add-to-cart") !== null;
+            let priceWithIVA = document.querySelector("#pdp-price-current-integer").textContent;
 
-            return { id, title, seller, sellerLink, reviews, price }
-        });
+            const convertPriceToNumber = (priceString) => {
+                return parseFloat(priceString.replace("€", "").replace(",", "."))
+            }
+
+            const convertIVAToIGIC = (price_iva) => {
+                const priceWithoutIVA = price_iva / (1 + 21 / 100);
+                return Number((priceWithoutIVA * (1 + 7 / 100)).toFixed(2));
+            }
+
+            priceWithIVA = convertPriceToNumber(priceWithIVA);
+            const priceWithIGIC = convertIVAToIGIC(priceWithIVA)
+
+            return { id, title, url, stock, priceWithIGIC, priceWithIVA }
+        }, url);
 
         productsData.push(data)
+        console.log(`Scraped ${url}`)
     });
 
-    cluster.on('taskerror', (err, data, willRetry) => {
-        if (willRetry) {
-          console.warn(`Encountered an error while scraping ${data}. ${err.message}\nThis job will be retried`);
-        } else {
-          console.error(`Failed to scrape ${data}: ${err.message}`);
-        }
+    cluster.on('taskerror', (err, data) => {
+        console.error(`Failed to scrape ${data}: ${err.message}`);
     });
 
     // Add pages to queue
@@ -57,5 +63,6 @@ puppeteer.use(pluginStealth());
     await cluster.idle();
     await cluster.close();
 
+    // print scraped data
     console.log(productsData)
 })();
