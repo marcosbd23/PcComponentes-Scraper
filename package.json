@@ -2,7 +2,7 @@
   "name": "pccomponentes-scraper",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/marcosbd23/PcComponentes-Scraper#readme",
   "dependencies": {
+    "discord-webhook-node": "^1.1.8",
     "fs": "^0.0.1-security",
+    "mysql2": "^3.6.3",
     "puppeteer": "^21.4.0",
     "puppeteer-cluster": "^0.23.0",
     "puppeteer-extra": "^3.3.6",
