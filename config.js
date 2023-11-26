@@ -1,10 +1,11 @@
 const config = {
-    webhook_url: "url",
+    product_webhook_url: "",
+    change_webhook_url: "",
     db: {
         host: 'localhost',
         user: 'root',
         password: '',
-        database: 'pcc_prices'
+        database: 'pccomponentes_info'
     }
 }
 

@@ -24,7 +24,7 @@ const Database = {
 
     getProductInfo(productID) {
         return new Promise((resolve, reject) => {
-            const selectQuery = 'SELECT * FROM prices WHERE id = ?';
+            const selectQuery = 'SELECT * FROM products WHERE id = ?';
 
             connection.query(selectQuery, [productID], (err, results) => {
                 if (err) {
@@ -36,11 +36,11 @@ const Database = {
         });
     },
 
-    insertProduct({id, name, link, stock, price}) {
+    insertProduct({id, name, url, vendor, brand, stock, price}) {
         return new Promise((resolve, reject) => {
-            const insertQuery = 'INSERT INTO prices (id, nombre, enlace, stock, precio, lowest_price) VALUES (?, ?, ?, ?, ?, ?)';
+            const insertQuery = 'INSERT INTO products (id, name, url, vendor, brand, stock, price, lowest_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-            connection.query(insertQuery, [id, name, link, stock, price, price], (err) => {
+            connection.query(insertQuery, [id, name, url, vendor, brand, stock, price, price], (err) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -50,11 +50,25 @@ const Database = {
         });
     },
 
-    updateProduct({id, name, stock, price, lowest_price}) {
+    insertChange({type, product_id, oldInfo, newInfo}) {
         return new Promise((resolve, reject) => {
-            const updateQuery = 'UPDATE prices SET nombre = ?, stock = ?, precio = ?, lowest_price = ? WHERE id = ?';
+            const insertQuery = 'INSERT INTO changes (product_id, type, old, new) VALUES (?, ?, ?, ?)';
 
-            connection.query(updateQuery, [name, stock, price, lowest_price, id], (err) => {
+            connection.query(insertQuery, [product_id, type, oldInfo, newInfo], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    },
+
+    updateProduct({id, name, stock, vendor, brand, price, lowest_price}) {
+        return new Promise((resolve, reject) => {
+            const updateQuery = 'UPDATE products SET name = ?, stock = ?, vendor = ?, brand = ?, price = ?, lowest_price = ? WHERE id = ?';
+
+            connection.query(updateQuery, [name, stock, vendor, brand, price, lowest_price, id], (err) => {
                 if (err) {
                     reject(err);
                 } else {

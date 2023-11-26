@@ -1,10 +1,12 @@
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
 const config = require("../config")
-const hook = new Webhook(config.webhook_url);
+const producthook = new Webhook(config.product_webhook_url);
+const changehook = new Webhook(config.change_webhook_url);
 
 const Discord = {
 
-    sendWebhook({url, name, oldPrice, newPrice}) {
+    sendPriceLog({url, name, oldPrice, newPrice}) {
+        if (oldPrice == newPrice) return;
         const formattedOldPrice = oldPrice.toLocaleString('es-ES', {
             style: 'currency',
             currency: 'EUR',
@@ -17,14 +19,39 @@ const Discord = {
 
         const embed = new MessageBuilder()
         .setTitle(name)
-        .setDescription("Nuevo precio mas bajo")
+        .setDescription("Lowest Price Updated")
         .setURL(url)
-        .addField('Antiguo', formattedOldPrice, true)
-        .addField('Nuevo', formattedNewPrice, true)
+        .addField('Old', formattedOldPrice, true)
+        .addField('New', formattedNewPrice, true)
         .setColor('#FF6000')
         .setTimestamp();
 
-        hook.send(embed);
+        producthook.send(embed);
+    },
+
+    sendChangeLog({type, url, name, oldInfo, newInfo}) {
+        if (oldInfo == newInfo) return;
+
+        oldInfo = oldInfo.toLocaleString('es-ES', {
+            style: 'currency',
+            currency: 'EUR',
+        });
+
+        newInfo = newInfo.toLocaleString('es-ES', {
+            style: 'currency',
+            currency: 'EUR',
+        });
+
+        const embed = new MessageBuilder()
+        .setTitle(name)
+        .setDescription(type)
+        .setURL(url)
+        .addField('Old', oldInfo, true)
+        .addField('New', newInfo, true)
+        .setColor('#FF6000')
+        .setTimestamp();
+
+        changehook.send(embed);
     }
 }
 
